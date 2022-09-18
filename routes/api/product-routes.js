@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
     // be sure to include its associated Category and Tag data
   try {
    const allProductData = await Product.findAll({
-     include: [{ model: Category, model: Tag}],
+     include: [{ model: Category}, {model: Tag}],
     });
     res.status(200).json(allProductData)
   } catch (err) {
@@ -23,7 +23,7 @@ router.get('/:id', async (req, res) => {
   // be sure to include its associated Category and Tag data
   try {
     const oneProductData = await Product.findByPk(req.params.id, {
-      include: [{ model: Category, model: Tag}],
+      include: [{ model: Category }, { model: Tag}],
   });
     if(!oneProductData) {
       res.status(404).json({ message: "No product with that id" });
@@ -45,7 +45,12 @@ router.post('/', (req, res) => {
       tagIds: [1, 2, 3, 4]
     }
   */
-  Product.create(req.body)
+  Product.create({
+    product_name: req.body.product_name,
+      price: req.body.price,
+      stock: req.body.stock,
+      tagIds: [1, 2, 3, 4]
+  })
     .then((product) => {
       // if there's product tags, we need to create pairings to bulk create in the ProductTag model
       if (req.body.tagIds.length) {
@@ -70,13 +75,22 @@ router.post('/', (req, res) => {
 // update product
 router.put('/:id', (req, res) => {
   // update product data
-  Product.update(req.body, {
-    where: {
+  Product.update(
+    {
+    id: req.body.id,
+    product_name: req.body.product_name,
+    price: req.body.price,
+    stock: req.body.stock,
+    category_id: req.body.category_id,
+    },
+    {
+      where: {
       id: req.params.id,
     },
   })
-    .then((product) => {
+    .then((_product) => {
       // find all associated tags from ProductTag
+      //res.json(product)
       return ProductTag.findAll({ where: { product_id: req.params.id } });
     })
     .then((productTags) => {
@@ -111,6 +125,15 @@ router.put('/:id', (req, res) => {
 
 router.delete('/:id', (req, res) => {
   // delete one product by its `id` value
+  Product.destroy({
+    where: {
+      id: req.params.id,
+    },
+  })
+    .then((deletedProduct) => {
+      res.json(deletedProduct);
+    })
+    .catch((err) => res.json(err));
 });
 
 module.exports = router;
