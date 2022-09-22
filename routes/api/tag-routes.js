@@ -49,7 +49,14 @@ router.put('/:id', (req, res) => {
   // update a tag's name by its `id` value
   Tag.update({
     id: req.body.id,
-  })
+    tag_name: req.body.tag_name,
+  },
+  {
+    where: {
+      id: req.params.id
+    },
+  }
+  )
   .then((updateTag) => {
     res.json(updateTag)
   })
@@ -58,17 +65,21 @@ router.put('/:id', (req, res) => {
   })
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   // delete on tag by its `id` value
-  Tag.destroy({
-    id: req.body.id,
-  })
-  .then((deletedTag) => {
-    res.json(deletedTag)
-  })
-  .catch((err) => {
-    res.json(err)
-  })
+  try {
+    const deletedTag = await Tag.destroy({
+      where: {
+        id: req.params.id
+      }
+    });
+    if (!deletedTag) {
+      res.status(404).json({ message: 'No location found with this id!' });
+      return;
+    }
+    res.status(200).json(deletedTag);
+  } catch (err) {
+    res.status(500).json(err);
+  }
 });
-
 module.exports = router;
